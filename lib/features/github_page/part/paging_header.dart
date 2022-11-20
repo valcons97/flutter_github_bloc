@@ -3,11 +3,11 @@ part of '../github_page.dart';
 class PagingHeader extends StatelessWidget {
   const PagingHeader(
       {super.key,
-      required this.chipValue,
+      required this.pagePaginationValue,
       required this.pageSelected,
       required this.scrollSelected});
 
-  final ChipValue chipValue;
+  final PagePagination pagePaginationValue;
 
   final bool scrollSelected;
 
@@ -22,10 +22,10 @@ class PagingHeader extends StatelessWidget {
             text: 'Lazy Loading',
             selected: scrollSelected,
             onSelected: (val) {
-              if (chipValue != ChipValue.lazyLoading) {
+              if (pagePaginationValue != PagePagination.lazyLoading) {
                 context
                     .read<GithubSearchCubit>()
-                    .setPaging(ChipValue.lazyLoading);
+                    .setPaging(PagePagination.lazyLoading);
               }
             },
           ),
@@ -35,10 +35,10 @@ class PagingHeader extends StatelessWidget {
             text: 'With Index',
             selected: pageSelected,
             onSelected: (val) {
-              if (chipValue != ChipValue.withIndex) {
+              if (pagePaginationValue != PagePagination.withIndex) {
                 context
                     .read<GithubSearchCubit>()
-                    .setPaging(ChipValue.withIndex);
+                    .setPaging(PagePagination.withIndex);
               }
             },
           ),

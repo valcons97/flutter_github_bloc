@@ -11,7 +11,7 @@ enum RadioValue {
   repositories,
 }
 
-enum ChipValue {
+enum PagePagination {
   lazyLoading,
   withIndex,
 }

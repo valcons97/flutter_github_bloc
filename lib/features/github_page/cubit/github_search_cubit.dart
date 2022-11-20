@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:deall/utils/lib/utils.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
@@ -18,46 +17,44 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
   GithubSearchCubit()
       : super(
           const GithubSearchState(
-            cubitState: CubitState.initial,
+            state: CubitState.initial,
             radioValue: RadioValue.users,
-            chipValue: ChipValue.lazyLoading,
+            pagePaginationValue: PagePagination.lazyLoading,
             userModel: [],
             issueModel: [],
             repoModel: [],
           ),
         );
 
-  void fetchData(String? value, bool fetchMore) {
+  void fetchData(bool fetchMore) {
     late String uri;
 
     final String baseUrl = dotenv.getString('BASE_URL');
 
-    final radioValue = (state).radioValue;
+    final radioValue = state.radioValue;
 
-    if (value == null) {
-      value == (state).search;
+    uri =
+        '$baseUrl${radioValue.name}?q=${state.search}&per_page=${state.limit}';
+
+    if (state.search != null) {
+      cacheOrFetch(uri, radioValue);
     }
-
-    // Constant limit per page is 10
-    uri = '$baseUrl${radioValue.name}?q=$value&per_page=10';
-
-    cacheOrFetch(uri, radioValue, fetchMore);
   }
 
-  // Fetching users data
+  /// Fetching users data
   Future<void> fetchUsersData(
       String val, String uri, String radioValue, bool fetchMore) async {
     List<UserModel> currentList = [];
 
-    currentList.addAll((state).userModel);
+    currentList.addAll(state.userModel);
     late List<UserModel> list;
     try {
-      if (!fetchMore) {
-        emit(state.copyWith(cubitState: CubitState.loading));
+      if (currentList.isEmpty) {
+        /// State wont go to loading when fetching more
+        emit(state.copyWith(state: CubitState.loading));
       }
 
-      final response =
-          await http.get(Uri.parse('$uri&page=${(state).userPage}'));
+      final response = await http.get(Uri.parse('$uri&page=${state.userPage}'));
 
       if (response.statusCode == 200) {
         list = (json.decode(response.body)['items'] as List)
@@ -66,9 +63,13 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
 
         currentList.addAll(list);
 
+        if (list.length < state.limit) {
+          emit(state.copyWith(userHasMore: false));
+        }
+
         emit(
           state.copyWith(
-            cubitState: CubitState.loaded,
+            state: CubitState.loaded,
             userModel: currentList,
             usersSearch: val,
           ),
@@ -81,7 +82,7 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     } catch (e) {
       emit(
         state.copyWith(
-          cubitState: CubitState.errorLoading,
+          state: CubitState.errorLoading,
           errorMessage:
               "Error: Please contact support about this error \n${e.toString()}",
         ),
@@ -89,24 +90,38 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     }
   }
 
-  // Fetching Issues Data
+  /// Fetching Issues Data
   Future<void> fetchIssuesData(
-      String val, String uri, String radioValue) async {
+      String val, String uri, String radioValue, bool fetchMore) async {
+    List<IssuesModel> currentList = [];
+
+    currentList.addAll(state.issueModel);
     late List<IssuesModel> list;
 
     try {
-      emit(state.copyWith(cubitState: CubitState.loading));
-      final response = await http.get(Uri.parse(uri));
+      if (currentList.isEmpty) {
+        /// State wont go to loading when fetching more
+        emit(state.copyWith(state: CubitState.loading));
+      }
+
+      final response =
+          await http.get(Uri.parse('$uri&page=${state.issuesPage}'));
 
       if (response.statusCode == 200) {
         list = (json.decode(response.body)['items'] as List)
             .map((data) => IssuesModel.fromJson(data))
             .toList();
 
+        currentList.addAll(list);
+
+        if (list.length < state.limit) {
+          emit(state.copyWith(issuesHasMore: false));
+        }
+
         emit(
           state.copyWith(
-            cubitState: CubitState.loaded,
-            issueModel: list,
+            state: CubitState.loaded,
+            issueModel: currentList,
             issuesSearch: val,
           ),
         );
@@ -118,7 +133,7 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     } catch (e) {
       emit(
         state.copyWith(
-          cubitState: CubitState.errorLoading,
+          state: CubitState.errorLoading,
           errorMessage:
               "Error: Please contact support about this error \n${e.toString()}",
         ),
@@ -126,25 +141,36 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     }
   }
 
-  // Fetching Repositories Data
-  Future<void> fetchRepoData(String val, String uri, String radioValue) async {
+  /// Fetching Repositories Data
+  Future<void> fetchRepoData(
+      String val, String uri, String radioValue, bool fetchMore) async {
+    List<RepositoriesModel> currentList = [];
+
+    currentList.addAll(state.repoModel);
     late List<RepositoriesModel> list;
 
     try {
-      emit(state.copyWith(cubitState: CubitState.loading));
-      final response = await http.get(Uri.parse(uri));
+      if (currentList.isEmpty) {
+        /// State wont go to loading when fetching more
+        emit(state.copyWith(state: CubitState.loading));
+      }
+      final response = await http.get(Uri.parse('$uri&page=${state.repoPage}'));
 
       if (response.statusCode == 200) {
         list = (json.decode(response.body)['items'] as List)
             .map((data) => RepositoriesModel.fromJson(data))
             .toList();
 
-        debugPrint(list.toString());
+        currentList.addAll(list);
+
+        if (list.length < state.limit) {
+          emit(state.copyWith(repoHasMore: false));
+        }
 
         emit(
           state.copyWith(
-            cubitState: CubitState.loaded,
-            repoModel: list,
+            state: CubitState.loaded,
+            repoModel: currentList,
             reposSearch: val,
           ),
         );
@@ -156,7 +182,7 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     } catch (e) {
       emit(
         state.copyWith(
-          cubitState: CubitState.errorLoading,
+          state: CubitState.errorLoading,
           errorMessage:
               'Error: Please contact support about this error \n${e.toString()}',
         ),
@@ -165,109 +191,141 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
   }
 
   Future<void> cacheOrFetch(
-      String uri, RadioValue radioValue, bool fetchMore) async {
-    // When radio button value is users
+    String uri,
+    RadioValue radioValue,
+  ) async {
+    /// When radio button value is users
     if (radioValue == RadioValue.users) {
-      if ((state).userModel.isEmpty) {
+      if (state.userModel.isEmpty) {
         await fetchUsersData(
-            (state).search ?? "", uri, radioValue.name, fetchMore);
+            state.search ?? "", uri, radioValue.name, (state.userHasMore));
       } else {
-        if ((state).usersSearch != (state).search) {
+        if (state.usersSearch != state.search) {
           emptyData(radioValue);
           await fetchUsersData(
-              (state).search ?? "", uri, radioValue.name, fetchMore);
-        } else if (fetchMore) {
-          emit(state.copyWith(userPage: (state).userPage! + 1));
+              state.search ?? "", uri, radioValue.name, (state.userHasMore));
+        } else if ((state.userHasMore)) {
+          emit(state.copyWith(userPage: state.userPage! + 1));
           await fetchUsersData(
-              (state).search ?? "", uri, radioValue.name, fetchMore);
+              state.search ?? "", uri, radioValue.name, (state.userHasMore));
         } else {
-          emit(state.copyWith(cubitState: CubitState.loaded));
+          emit(state.copyWith(state: CubitState.loaded));
         }
       }
     }
-    // When radio button value is issues
+
+    /// When radio button value is issues
     else if (radioValue == RadioValue.issues) {
-      if ((state).issueModel.isEmpty) {
-        await fetchIssuesData((state).search ?? "", uri, radioValue.name);
+      if (state.issueModel.isEmpty) {
+        await fetchIssuesData(
+            state.search ?? "", uri, radioValue.name, (state.issuesHasMore));
       } else {
-        if ((state).issuesSearch != (state).search) {
+        if (state.issuesSearch != state.search) {
           emptyData(radioValue);
-          await fetchIssuesData((state).search ?? "", uri, radioValue.name);
-        } else if (fetchMore) {
-          emit(state.copyWith(issuesPage: (state).userPage! + 1));
-          await fetchIssuesData((state).search ?? "", uri, radioValue.name);
+          await fetchIssuesData(
+              state.search ?? "", uri, radioValue.name, (state.issuesHasMore));
+        } else if ((state.issuesHasMore)) {
+          emit(state.copyWith(issuesPage: state.issuesPage! + 1));
+          await fetchIssuesData(
+              state.search ?? "", uri, radioValue.name, (state.issuesHasMore));
         } else {
           emit(
             state.copyWith(
-              cubitState: CubitState.loaded,
+              state: CubitState.loaded,
             ),
           );
         }
       }
     }
-    // When radio button value is issues
+
+    /// When radio button value is repositories
     else if (radioValue == RadioValue.repositories) {
-      if ((state).repoModel.isEmpty) {
-        await fetchRepoData((state).search ?? "", uri, radioValue.name);
+      ///
+      /// When Repositories Model is empty or first search
+      if (state.repoModel.isEmpty) {
+        await fetchRepoData(
+            state.search ?? "", uri, radioValue.name, (state.repoHasMore));
       } else {
-        if ((state).reposSearch != (state).search) {
+        ///
+        /// When repositories search is not same with current search fetch new data
+        if (state.reposSearch != state.search) {
           emptyData(radioValue);
-          await fetchRepoData((state).search ?? "", uri, radioValue.name);
-        } else if (fetchMore) {
-          emit(state.copyWith(repoPage: (state).userPage! + 1));
-          await fetchRepoData((state).search ?? "", uri, radioValue.name);
-        } else {
-          emit(state.copyWith(cubitState: CubitState.loaded));
+          await fetchRepoData(
+              state.search ?? "", uri, radioValue.name, (state.repoHasMore));
+        }
+
+        /// When repositories search has more data in lazy loading
+        else if ((state.repoHasMore)) {
+          emit(state.copyWith(repoPage: state.userPage! + 1));
+          await fetchRepoData(
+              state.search ?? "", uri, radioValue.name, (state.repoHasMore));
+        }
+
+        /// When there is no need to fetch new data will show loaded state
+        else {
+          emit(state.copyWith(state: CubitState.loaded));
         }
       }
     }
   }
 
+  /// Set Radio button value to Users/Issues/Repositories
   void setRadio(RadioValue value) {
     emit(state.copyWith(radioValue: value));
   }
 
+  /// Set Search value
   void setSearch(String value) {
     emit(state.copyWith(search: value));
   }
 
-  void setPaging(ChipValue chipValue) {
-    emit(state.copyWith(chipValue: chipValue));
+  /// Set LazyLoading or PageIndex
+  void setPaging(PagePagination pagePaginationValue) {
+    emit(state.copyWith(pagePaginationValue: pagePaginationValue));
   }
 
+  /// When response is 403 show this error message
   void error403() {
     emit(
       state.copyWith(
-        cubitState: CubitState.errorLoading,
+        state: CubitState.errorLoading,
         errorMessage: "Error: this Api has a limit of 10 hits per minute",
       ),
     );
   }
 
+  /// Clear data when user search new value
   void emptyData(RadioValue radioValue) {
+    ///
+    /// When radio button value is users
     if (radioValue == RadioValue.users) {
       emit(
         state.copyWith(
           userModel: [],
           userPage: 1,
+          userHasMore: true,
         ),
       );
     }
-    // When radio button value is issues
+
+    /// When radio button value is issues
     else if (radioValue == RadioValue.issues) {
       emit(
         state.copyWith(
           issueModel: [],
           issuesPage: 1,
+          issuesHasMore: true,
         ),
       );
     }
-    // When radio button value is repo
+
+    /// When radio button value is repositories
     else if (radioValue == RadioValue.repositories) {
       emit(
         state.copyWith(
           repoModel: [],
           repoPage: 1,
+          repoHasMore: true,
         ),
       );
     }

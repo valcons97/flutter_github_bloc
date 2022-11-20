@@ -5,20 +5,32 @@ class SearchList extends StatelessWidget {
     super.key,
     required this.value,
     required this.length,
+    required this.pagePaginationValue,
     this.userModel,
     this.issueModel,
     this.repoModel,
+    this.userHasMore,
+    this.issueHasMore,
+    this.repoHasMore,
   });
 
   final RadioValue value;
 
   final int length;
 
+  final PagePagination pagePaginationValue;
+
   final List<UserModel>? userModel;
 
   final List<IssuesModel>? issueModel;
 
   final List<RepositoriesModel>? repoModel;
+
+  final bool? userHasMore;
+
+  final bool? issueHasMore;
+
+  final bool? repoHasMore;
 
   @override
   Widget build(BuildContext context) {
@@ -33,24 +45,26 @@ class SearchList extends StatelessWidget {
                 imageUrl: userModel![index].avatarUrl,
               );
             } else {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
-                  child: CircularProgressIndicator(),
+                  child: userHasMore!
+                      ? const CircularProgressIndicator()
+                      : const Text('No more data to load'),
                 ),
               );
             }
           } else if (value == RadioValue.issues) {
-            late int totalIssues;
-            if (issueModel![index].issues == null) {
-              // if issues is null will be default by 0
-              totalIssues = 0;
-            } else {
-              var openIssues = issueModel![index].issues?.openIssues ?? 0;
-              var closedIssues = issueModel![index].issues?.closedIssues ?? 0;
-              totalIssues = openIssues + closedIssues;
-            }
             if (index < length) {
+              late int totalIssues;
+              if (issueModel![index].issues == null) {
+                // if issues is null will be default by 0
+                totalIssues = 0;
+              } else {
+                var openIssues = issueModel![index].issues?.openIssues ?? 0;
+                var closedIssues = issueModel![index].issues?.closedIssues ?? 0;
+                totalIssues = openIssues + closedIssues;
+              }
               return DeallListTile.issues(
                 title: issueModel![index].title,
                 imageUrl: issueModel![index].user.avatarUrl,
@@ -60,23 +74,36 @@ class SearchList extends StatelessWidget {
                 states: issueModel![index].state ?? 'Unknown',
               );
             } else {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Center(
-                  child: CircularProgressIndicator(),
+                  child: issueHasMore!
+                      ? const CircularProgressIndicator()
+                      : const Text('No more data to load'),
                 ),
               );
             }
           } else if (value == RadioValue.repositories) {
-            return DeallListTile.repo(
-              repoTitle: repoModel![index].repoTitle,
-              imageUrl: repoModel![index].owner.avatarUrl,
-              createdDate:
-                  DateFormat('dd-MM-yyyy').format(repoModel![index].createdAt),
-              watchers: '${repoModel![index].watchers} watchers',
-              stars: '${repoModel![index].stars} stars',
-              forks: '${repoModel![index].forks} forks',
-            );
+            if (index < length) {
+              return DeallListTile.repo(
+                repoTitle: repoModel![index].repoTitle,
+                imageUrl: repoModel![index].owner.avatarUrl,
+                createdDate: DateFormat('dd-MM-yyyy')
+                    .format(repoModel![index].createdAt),
+                watchers: '${repoModel![index].watchers} watchers',
+                stars: '${repoModel![index].stars} stars',
+                forks: '${repoModel![index].forks} forks',
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Center(
+                  child: repoHasMore!
+                      ? const CircularProgressIndicator()
+                      : const Text('No more data to load'),
+                ),
+              );
+            }
           }
           return Container();
         },

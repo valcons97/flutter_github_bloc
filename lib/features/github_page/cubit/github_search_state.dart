@@ -2,9 +2,9 @@ part of 'github_search_cubit.dart';
 
 class GithubSearchState extends Equatable {
   const GithubSearchState({
-    required this.cubitState,
+    required this.state,
     required this.radioValue,
-    required this.chipValue,
+    required this.pagePaginationValue,
     this.search,
     this.usersSearch,
     this.issuesSearch,
@@ -16,13 +16,20 @@ class GithubSearchState extends Equatable {
     this.userPage = 1,
     this.issuesPage = 1,
     this.repoPage = 1,
+    this.limit = 15,
+    this.userHasMore = true,
+    this.issuesHasMore = true,
+    this.repoHasMore = true,
   });
 
-  final CubitState cubitState;
+  /// State for initial,loading,loaded and error
+  final CubitState state;
 
+  /// Radio value for users, issues, repositories
   final RadioValue radioValue;
 
-  final ChipValue chipValue;
+  ///
+  final PagePagination pagePaginationValue;
 
   final String? search;
   final String? usersSearch;
@@ -33,21 +40,27 @@ class GithubSearchState extends Equatable {
   final int? issuesPage;
   final int? repoPage;
 
+  final int limit;
+
+  final bool userHasMore;
+  final bool issuesHasMore;
+  final bool repoHasMore;
+
   final List<UserModel> userModel;
   final List<IssuesModel> issueModel;
   final List<RepositoriesModel> repoModel;
 
   final String? errorMessage;
 
-  bool get scrollSelected => chipValue == ChipValue.lazyLoading;
+  bool get scrollSelected => pagePaginationValue == PagePagination.lazyLoading;
 
-  bool get pageSelected => chipValue == ChipValue.withIndex;
+  bool get pageSelected => pagePaginationValue == PagePagination.withIndex;
 
   @override
   List<Object?> get props => [
-        cubitState,
+        state,
         radioValue,
-        chipValue,
+        pagePaginationValue,
         search,
         usersSearch,
         issuesSearch,
@@ -58,13 +71,15 @@ class GithubSearchState extends Equatable {
         userPage,
         issuesPage,
         repoPage,
+        userHasMore,
+        issuesHasMore,
+        repoHasMore
       ];
 
   GithubSearchState copyWith({
-    CubitState? cubitState,
+    CubitState? state,
     RadioValue? radioValue,
-    RadioValue? lastValue,
-    ChipValue? chipValue,
+    PagePagination? pagePaginationValue,
     String? search,
     String? usersSearch,
     String? issuesSearch,
@@ -76,11 +91,14 @@ class GithubSearchState extends Equatable {
     List<IssuesModel>? issueModel,
     List<RepositoriesModel>? repoModel,
     String? errorMessage,
+    bool? userHasMore,
+    bool? issuesHasMore,
+    bool? repoHasMore,
   }) {
     return GithubSearchState(
-      cubitState: cubitState ?? this.cubitState,
+      state: state ?? this.state,
       radioValue: radioValue ?? this.radioValue,
-      chipValue: chipValue ?? this.chipValue,
+      pagePaginationValue: pagePaginationValue ?? this.pagePaginationValue,
       search: search ?? this.search,
       usersSearch: usersSearch ?? this.usersSearch,
       issuesSearch: issuesSearch ?? this.issuesSearch,
@@ -92,6 +110,9 @@ class GithubSearchState extends Equatable {
       issueModel: issueModel ?? this.issueModel,
       repoModel: repoModel ?? this.repoModel,
       errorMessage: errorMessage ?? this.errorMessage,
+      userHasMore: userHasMore ?? this.userHasMore,
+      issuesHasMore: issuesHasMore ?? this.issuesHasMore,
+      repoHasMore: repoHasMore ?? this.repoHasMore,
     );
   }
 }

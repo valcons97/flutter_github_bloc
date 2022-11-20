@@ -37,9 +37,7 @@ class RadioHeader extends StatelessWidget {
                     if (state.search != null) {
                       backToTop();
 
-                      context
-                          .read<GithubSearchCubit>()
-                          .fetchData(state.search ?? '', false);
+                      context.read<GithubSearchCubit>().fetchData(false);
                     }
                   }
                 },
@@ -55,9 +53,7 @@ class RadioHeader extends StatelessWidget {
                         .setRadio(RadioValue.issues);
                     if (state.search != null) {
                       backToTop();
-                      context
-                          .read<GithubSearchCubit>()
-                          .fetchData(state.search ?? '', false);
+                      context.read<GithubSearchCubit>().fetchData(false);
                     }
                   }
                 },
@@ -73,9 +69,7 @@ class RadioHeader extends StatelessWidget {
                         .setRadio(RadioValue.repositories);
                     if (state.search != null) {
                       backToTop();
-                      context
-                          .read<GithubSearchCubit>()
-                          .fetchData(state.search ?? '', false);
+                      context.read<GithubSearchCubit>().fetchData(false);
                     }
                   }
                 },

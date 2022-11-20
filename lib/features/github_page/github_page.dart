@@ -29,7 +29,7 @@ class _GithubPageState extends State<GithubPage> {
     super.initState();
     controller.addListener(() {
       if (controller.position.maxScrollExtent == controller.offset) {
-        context.read<GithubSearchCubit>().fetchData(null, true);
+        context.read<GithubSearchCubit>().fetchData(true);
       }
     });
   }
@@ -54,7 +54,8 @@ class _GithubPageState extends State<GithubPage> {
           builder: (context, state) {
             late Widget view;
 
-            Widget emptyView = SliverFillRemaining(
+            /// When user search and resulting in empty content
+            final Widget emptyView = SliverFillRemaining(
               hasScrollBody: true,
               child: Center(
                 child: Text(
@@ -63,53 +64,72 @@ class _GithubPageState extends State<GithubPage> {
               ),
             );
 
-            if (state.cubitState == CubitState.initial) {
+            /// Widget for user list view
+            final Widget usersListView;
+
+            state.userModel.isNotEmpty
+                ? usersListView = SearchList(
+                    value: state.radioValue,
+                    length: state.userModel.length,
+                    userModel: state.userModel,
+                    userHasMore: state.userHasMore,
+                    pagePaginationValue: state.pagePaginationValue,
+                  )
+                : usersListView = emptyView;
+
+            /// When state is initial
+            if (state.state == CubitState.initial) {
               view = const SliverFillRemaining(
                 hasScrollBody: true,
                 child: Center(
                   child: Text('Please search'),
                 ),
               );
-            } else if (state.cubitState == CubitState.loading) {
+            }
+
+            /// When state is loading show circular progress
+            else if (state.state == CubitState.loading) {
               view = const SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
                   child: CircularProgressIndicator(),
                 ),
               );
-            } else if (state.cubitState == CubitState.loaded) {
+            }
+
+            /// When state is loaded
+            else if (state.state == CubitState.loaded) {
+              /// Radio value is users
               if (state.radioValue == RadioValue.users) {
-                if (state.userModel.isNotEmpty) {
-                  view = SearchList(
-                    value: state.radioValue,
-                    length: state.userModel.length,
-                    userModel: state.userModel,
-                  );
-                } else {
-                  view = emptyView;
-                }
-              } else if (state.radioValue == RadioValue.issues) {
-                if (state.issueModel.isNotEmpty) {
-                  view = SearchList(
-                    value: state.radioValue,
-                    length: state.issueModel.length,
-                    issueModel: state.issueModel,
-                  );
-                } else {
-                  view = emptyView;
-                }
-              } else if (state.radioValue == RadioValue.repositories) {
-                if (state.repoModel.isNotEmpty) {
-                  view = SearchList(
-                    value: state.radioValue,
-                    length: state.repoModel.length,
-                    repoModel: state.repoModel,
-                  );
-                } else {
-                  view = emptyView;
-                }
+                view = usersListView;
               }
-            } else if (state.cubitState == CubitState.errorLoading) {
+
+              /// Radio value is issues
+              else if (state.radioValue == RadioValue.issues) {
+                state.issueModel.isNotEmpty
+                    ? view = SearchList(
+                        value: state.radioValue,
+                        length: state.issueModel.length,
+                        issueModel: state.issueModel,
+                        issueHasMore: state.issuesHasMore,
+                        pagePaginationValue: state.pagePaginationValue,
+                      )
+                    : view = emptyView;
+              } else if (state.radioValue == RadioValue.repositories) {
+                state.repoModel.isNotEmpty
+                    ? view = SearchList(
+                        value: state.radioValue,
+                        length: state.repoModel.length,
+                        repoModel: state.repoModel,
+                        repoHasMore: state.repoHasMore,
+                        pagePaginationValue: state.pagePaginationValue,
+                      )
+                    : view = emptyView;
+              }
+            }
+
+            /// When state is error loading show error message
+            else if (state.state == CubitState.errorLoading) {
               view = SliverFillRemaining(
                 hasScrollBody: true,
                 child: Center(
@@ -120,47 +140,41 @@ class _GithubPageState extends State<GithubPage> {
               );
             }
 
-            return NestedScrollView(
-              headerSliverBuilder: (context, innerBoxIsScrolled) {
-                return [
-                  SliverList(
-                    delegate: SliverChildListDelegate(
-                      [
-                        SearchHeader(blocContext: context),
-                      ],
-                    ),
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: CustomScrollView(
+                controller:
+                    state.pagePaginationValue == PagePagination.lazyLoading
+                        ? controller
+                        : null,
+                physics: const ClampingScrollPhysics(),
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Colors.transparent,
+                    flexibleSpace: SearchHeader(blocContext: context),
                   ),
-                ];
-              },
-              body: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: CustomScrollView(
-                  controller: controller,
-                  physics: const ClampingScrollPhysics(),
-                  slivers: [
-                    SliverStickyHeader(
-                      header: Container(
-                        color: context.res.colors.bgLightGray,
-                        child: Column(
-                          children: [
-                            RadioHeader(
-                              groupValue: state.radioValue,
-                              blocContext: context,
-                              controller: controller,
-                              backToTop: backToTop,
-                            ),
-                            PagingHeader(
-                              chipValue: state.chipValue,
-                              pageSelected: state.pageSelected,
-                              scrollSelected: state.scrollSelected,
-                            ),
-                          ],
-                        ),
+                  SliverStickyHeader(
+                    header: Container(
+                      color: context.res.colors.bgLightGray,
+                      child: Column(
+                        children: [
+                          RadioHeader(
+                            groupValue: state.radioValue,
+                            blocContext: context,
+                            controller: controller,
+                            backToTop: backToTop,
+                          ),
+                          PagingHeader(
+                            pagePaginationValue: state.pagePaginationValue,
+                            pageSelected: state.pageSelected,
+                            scrollSelected: state.scrollSelected,
+                          ),
+                        ],
                       ),
-                      sliver: view,
                     ),
-                  ],
-                ),
+                    sliver: view,
+                  ),
+                ],
               ),
             );
           },

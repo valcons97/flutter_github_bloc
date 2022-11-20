@@ -21,18 +21,15 @@ class SearchHeader extends StatelessWidget {
                     contentPadding: const EdgeInsets.only(top: 20),
                     isDense: true,
                     hintText: "Search",
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.only(top: 15),
-                      child: Icon(
-                        Icons.search,
-                        color: context.res.colors.textGray,
-                      ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: context.res.colors.textGray,
                     ),
                   ),
                   onChanged: (val) => debounce(() {
                     if (val.isNotEmpty && state.search != val) {
                       context.read<GithubSearchCubit>().setSearch(val);
-                      context.read<GithubSearchCubit>().fetchData(val, false);
+                      context.read<GithubSearchCubit>().fetchData(false);
                     }
                   }),
                 );
