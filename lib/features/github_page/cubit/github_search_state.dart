@@ -16,10 +16,13 @@ class GithubSearchState extends Equatable {
     this.userPage = 1,
     this.issuesPage = 1,
     this.repoPage = 1,
-    this.limit = 15,
+    this.limit = 6,
     this.userHasMore = true,
     this.issuesHasMore = true,
     this.repoHasMore = true,
+    this.userSelectedPage = 1,
+    this.issuesSelectedPage = 1,
+    this.repoSelectedPage = 1,
   });
 
   /// State for initial,loading,loaded and error
@@ -50,6 +53,10 @@ class GithubSearchState extends Equatable {
   final List<IssuesModel> issueModel;
   final List<RepositoriesModel> repoModel;
 
+  final int? userSelectedPage;
+  final int? issuesSelectedPage;
+  final int? repoSelectedPage;
+
   final String? errorMessage;
 
   bool get scrollSelected => pagePaginationValue == PagePagination.lazyLoading;
@@ -73,7 +80,10 @@ class GithubSearchState extends Equatable {
         repoPage,
         userHasMore,
         issuesHasMore,
-        repoHasMore
+        repoHasMore,
+        userSelectedPage,
+        issuesSelectedPage,
+        repoSelectedPage,
       ];
 
   GithubSearchState copyWith({
@@ -94,6 +104,9 @@ class GithubSearchState extends Equatable {
     bool? userHasMore,
     bool? issuesHasMore,
     bool? repoHasMore,
+    int? userSelectedPage,
+    int? issuesSelectedPage,
+    int? repoSelectedPage,
   }) {
     return GithubSearchState(
       state: state ?? this.state,
@@ -113,6 +126,9 @@ class GithubSearchState extends Equatable {
       userHasMore: userHasMore ?? this.userHasMore,
       issuesHasMore: issuesHasMore ?? this.issuesHasMore,
       repoHasMore: repoHasMore ?? this.repoHasMore,
+      userSelectedPage: userSelectedPage ?? this.userSelectedPage,
+      issuesSelectedPage: issuesSelectedPage ?? this.issuesSelectedPage,
+      repoSelectedPage: repoSelectedPage ?? this.repoSelectedPage,
     );
   }
 }

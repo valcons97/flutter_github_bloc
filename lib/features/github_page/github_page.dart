@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:intl/intl.dart';
+import 'package:number_paginator/number_paginator.dart';
 
 import 'cubit/enums.dart';
 import 'cubit/github_search_cubit.dart';
@@ -22,27 +23,34 @@ class GithubPage extends StatefulWidget {
 }
 
 class _GithubPageState extends State<GithubPage> {
-  final controller = ScrollController();
+  final lazyController = ScrollController();
+  final indexController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    controller.addListener(() {
-      if (controller.position.maxScrollExtent == controller.offset) {
-        context.read<GithubSearchCubit>().fetchData(true);
+    lazyController.addListener(() {
+      if (lazyController.position.maxScrollExtent == lazyController.offset) {
+        context.read<GithubSearchCubit>().fetchData();
       }
     });
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    lazyController.dispose();
     super.dispose();
   }
 
   void backToTop() {
-    controller.jumpTo(
-      controller.position.minScrollExtent,
+    lazyController.jumpTo(
+      lazyController.position.minScrollExtent,
+    );
+  }
+
+  void indexBackToTop() {
+    indexController.jumpTo(
+      indexController.position.minScrollExtent,
     );
   }
 
@@ -74,6 +82,9 @@ class _GithubPageState extends State<GithubPage> {
                     userModel: state.userModel,
                     userHasMore: state.userHasMore,
                     pagePaginationValue: state.pagePaginationValue,
+                    limit: state.limit,
+                    blocContext: context,
+                    indexBackToTop: indexBackToTop,
                   )
                 : usersListView = emptyView;
 
@@ -113,6 +124,9 @@ class _GithubPageState extends State<GithubPage> {
                         issueModel: state.issueModel,
                         issueHasMore: state.issuesHasMore,
                         pagePaginationValue: state.pagePaginationValue,
+                        limit: state.limit,
+                        blocContext: context,
+                        indexBackToTop: indexBackToTop,
                       )
                     : view = emptyView;
               } else if (state.radioValue == RadioValue.repositories) {
@@ -123,6 +137,9 @@ class _GithubPageState extends State<GithubPage> {
                         repoModel: state.repoModel,
                         repoHasMore: state.repoHasMore,
                         pagePaginationValue: state.pagePaginationValue,
+                        limit: state.limit,
+                        blocContext: context,
+                        indexBackToTop: indexBackToTop,
                       )
                     : view = emptyView;
               }
@@ -145,8 +162,8 @@ class _GithubPageState extends State<GithubPage> {
               child: CustomScrollView(
                 controller:
                     state.pagePaginationValue == PagePagination.lazyLoading
-                        ? controller
-                        : null,
+                        ? lazyController
+                        : indexController,
                 physics: const ClampingScrollPhysics(),
                 slivers: [
                   SliverAppBar(
@@ -161,8 +178,9 @@ class _GithubPageState extends State<GithubPage> {
                           RadioHeader(
                             groupValue: state.radioValue,
                             blocContext: context,
-                            controller: controller,
+                            controller: lazyController,
                             backToTop: backToTop,
+                            indexBackToTop: indexBackToTop,
                           ),
                           PagingHeader(
                             pagePaginationValue: state.pagePaginationValue,

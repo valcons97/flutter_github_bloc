@@ -7,6 +7,7 @@ class RadioHeader extends StatelessWidget {
     required this.blocContext,
     required this.controller,
     required this.backToTop,
+    required this.indexBackToTop,
   });
 
   final Object? groupValue;
@@ -16,6 +17,8 @@ class RadioHeader extends StatelessWidget {
   final ScrollController controller;
 
   final VoidCallback backToTop;
+
+  final VoidCallback indexBackToTop;
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +38,14 @@ class RadioHeader extends StatelessWidget {
                         .read<GithubSearchCubit>()
                         .setRadio(RadioValue.users);
                     if (state.search != null) {
-                      backToTop();
+                      if (state.pagePaginationValue ==
+                          PagePagination.lazyLoading) {
+                        backToTop();
+                      } else {
+                        indexBackToTop();
+                      }
 
-                      context.read<GithubSearchCubit>().fetchData(false);
+                      context.read<GithubSearchCubit>().fetchData();
                     }
                   }
                 },
@@ -52,8 +60,13 @@ class RadioHeader extends StatelessWidget {
                         .read<GithubSearchCubit>()
                         .setRadio(RadioValue.issues);
                     if (state.search != null) {
-                      backToTop();
-                      context.read<GithubSearchCubit>().fetchData(false);
+                      if (state.pagePaginationValue ==
+                          PagePagination.lazyLoading) {
+                        backToTop();
+                      } else {
+                        indexBackToTop();
+                      }
+                      context.read<GithubSearchCubit>().fetchData();
                     }
                   }
                 },
@@ -68,8 +81,14 @@ class RadioHeader extends StatelessWidget {
                         .read<GithubSearchCubit>()
                         .setRadio(RadioValue.repositories);
                     if (state.search != null) {
-                      backToTop();
-                      context.read<GithubSearchCubit>().fetchData(false);
+                      if (state.pagePaginationValue ==
+                          PagePagination.lazyLoading) {
+                        backToTop();
+                      } else {
+                        indexBackToTop();
+                      }
+
+                      context.read<GithubSearchCubit>().fetchData();
                     }
                   }
                 },

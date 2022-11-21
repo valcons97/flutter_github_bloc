@@ -29,7 +29,7 @@ class SearchHeader extends StatelessWidget {
                   onChanged: (val) => debounce(() {
                     if (val.isNotEmpty && state.search != val) {
                       context.read<GithubSearchCubit>().setSearch(val);
-                      context.read<GithubSearchCubit>().fetchData(false);
+                      context.read<GithubSearchCubit>().fetchData();
                     }
                   }),
                 );
