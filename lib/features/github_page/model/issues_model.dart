@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-
-import 'models.dart';
+part of 'models.dart';
 
 class IssuesModel extends Equatable {
   const IssuesModel({

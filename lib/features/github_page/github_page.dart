@@ -6,10 +6,10 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:intl/intl.dart';
 import 'package:number_paginator/number_paginator.dart';
 
-import 'cubit/enums.dart';
 import 'cubit/github_search_cubit.dart';
-import 'model/models.dart';
 
+part 'part/index_list.dart';
+part 'part/lazy_scroll_list.dart';
 part 'part/paging_header.dart';
 part 'part/radio_header.dart';
 part 'part/search_header.dart';
@@ -62,6 +62,15 @@ class _GithubPageState extends State<GithubPage> {
           builder: (context, state) {
             late Widget view;
 
+            /// Widget for user list view
+            final Widget usersListView;
+
+            /// Widget for user list view
+            final Widget issuesListView;
+
+            /// Widget for user list view
+            final Widget repoListView;
+
             /// When user search and resulting in empty content
             final Widget emptyView = SliverFillRemaining(
               hasScrollBody: true,
@@ -72,21 +81,29 @@ class _GithubPageState extends State<GithubPage> {
               ),
             );
 
-            /// Widget for user list view
-            final Widget usersListView;
-
-            state.userModel.isNotEmpty
+            usersListView = state.userModel.isNotEmpty
                 ? usersListView = SearchList(
-                    value: state.radioValue,
                     length: state.userModel.length,
-                    userModel: state.userModel,
-                    userHasMore: state.userHasMore,
-                    pagePaginationValue: state.pagePaginationValue,
-                    limit: state.limit,
                     blocContext: context,
                     indexBackToTop: indexBackToTop,
                   )
                 : usersListView = emptyView;
+
+            issuesListView = state.issueModel.isNotEmpty
+                ? view = SearchList(
+                    length: state.issueModel.length,
+                    blocContext: context,
+                    indexBackToTop: indexBackToTop,
+                  )
+                : view = emptyView;
+
+            repoListView = state.repoModel.isNotEmpty
+                ? view = SearchList(
+                    length: state.repoModel.length,
+                    blocContext: context,
+                    indexBackToTop: indexBackToTop,
+                  )
+                : view = emptyView;
 
             /// When state is initial
             if (state.state == CubitState.initial) {
@@ -117,31 +134,12 @@ class _GithubPageState extends State<GithubPage> {
 
               /// Radio value is issues
               else if (state.radioValue == RadioValue.issues) {
-                state.issueModel.isNotEmpty
-                    ? view = SearchList(
-                        value: state.radioValue,
-                        length: state.issueModel.length,
-                        issueModel: state.issueModel,
-                        issueHasMore: state.issuesHasMore,
-                        pagePaginationValue: state.pagePaginationValue,
-                        limit: state.limit,
-                        blocContext: context,
-                        indexBackToTop: indexBackToTop,
-                      )
-                    : view = emptyView;
-              } else if (state.radioValue == RadioValue.repositories) {
-                state.repoModel.isNotEmpty
-                    ? view = SearchList(
-                        value: state.radioValue,
-                        length: state.repoModel.length,
-                        repoModel: state.repoModel,
-                        repoHasMore: state.repoHasMore,
-                        pagePaginationValue: state.pagePaginationValue,
-                        limit: state.limit,
-                        blocContext: context,
-                        indexBackToTop: indexBackToTop,
-                      )
-                    : view = emptyView;
+                view = issuesListView;
+              }
+
+              /// Radio value is repositories
+              else if (state.radioValue == RadioValue.repositories) {
+                view = repoListView;
               }
             }
 
@@ -185,7 +183,7 @@ class _GithubPageState extends State<GithubPage> {
                           PagingHeader(
                             pagePaginationValue: state.pagePaginationValue,
                             pageSelected: state.pageSelected,
-                            scrollSelected: state.scrollSelected,
+                            scrollSelected: state.lazyScrollSelected,
                           ),
                         ],
                       ),

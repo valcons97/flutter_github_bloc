@@ -1,5 +1,7 @@
 part of '../github_page.dart';
 
+/// Header for selecting lazyscroll
+/// or index
 class PagingHeader extends StatelessWidget {
   const PagingHeader(
       {super.key,

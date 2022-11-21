@@ -2,15 +2,14 @@ import 'dart:convert';
 
 import 'package:deall/utils/lib/utils.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 
 import '../model/models.dart';
-import 'enums.dart';
 
+part 'enums.dart';
 part 'github_search_state.dart';
 
 @injectable
@@ -32,27 +31,28 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
 
     final String baseUrl = dotenv.getString('BASE_URL');
 
-    final radioValue = state.radioValue;
-
     uri =
-        '$baseUrl${radioValue.name}?q=${state.search}&per_page=${state.limit}';
+        '$baseUrl${state.radioValue.name}?q=${state.search}&per_page=${state.limit}';
 
     if (state.search != null) {
-      cacheOrFetch(uri, radioValue);
+      cacheOrFetch(uri);
     }
   }
 
   /// Fetching users data
   Future<void> fetchUsersData(
-      String val, String uri, String radioValue, bool fetchMore) async {
+    String uri,
+  ) async {
     List<UserModel> currentList = [];
+    late List<UserModel> list;
 
     currentList.addAll(state.userModel);
-    late List<UserModel> list;
+
     try {
+      /// State wont go to loading when fetching more
+      /// except page index
       if (currentList.isEmpty ||
           state.pagePaginationValue == PagePagination.withIndex) {
-        /// State wont go to loading when fetching more
         emit(state.copyWith(state: CubitState.loading));
       }
 
@@ -65,6 +65,8 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
 
         currentList.addAll(list);
 
+        /// Stop getting more data when list length is
+        /// less than limit
         if (list.length < state.limit) {
           emit(state.copyWith(userHasMore: false));
         }
@@ -73,7 +75,7 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
           state.copyWith(
             state: CubitState.loaded,
             userModel: currentList,
-            usersSearch: val,
+            usersSearch: state.search,
           ),
         );
       } else {
@@ -81,29 +83,25 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
           error403();
         }
       }
-    } catch (e) {
-      emit(
-        state.copyWith(
-          state: CubitState.errorLoading,
-          errorMessage:
-              "Error: Please contact support about this error \n${e.toString()}",
-        ),
-      );
+    } catch (error) {
+      errorSupport(error.toString());
     }
   }
 
   /// Fetching Issues Data
   Future<void> fetchIssuesData(
-      String val, String uri, String radioValue, bool fetchMore) async {
+    String uri,
+  ) async {
     List<IssuesModel> currentList = [];
-
-    currentList.addAll(state.issueModel);
     late List<IssuesModel> list;
 
+    currentList.addAll(state.issueModel);
+
     try {
+      /// State wont go to loading when fetching more
+      /// except page index
       if (currentList.isEmpty ||
           state.pagePaginationValue == PagePagination.withIndex) {
-        /// State wont go to loading when fetching more
         emit(state.copyWith(state: CubitState.loading));
       }
 
@@ -117,6 +115,8 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
 
         currentList.addAll(list);
 
+        /// Stop getting more data when list length is
+        /// less than limit
         if (list.length < state.limit) {
           emit(state.copyWith(issuesHasMore: false));
         }
@@ -125,7 +125,7 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
           state.copyWith(
             state: CubitState.loaded,
             issueModel: currentList,
-            issuesSearch: val,
+            issuesSearch: state.search,
           ),
         );
       } else {
@@ -133,33 +133,26 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
           error403();
         }
       }
-    } catch (e) {
-      emit(
-        state.copyWith(
-          state: CubitState.errorLoading,
-          errorMessage:
-              "Error: Please contact support about this error \n${e.toString()}",
-        ),
-      );
+    } catch (error) {
+      errorSupport(error.toString());
     }
   }
 
   /// Fetching Repositories Data
-  Future<void> fetchRepoData(
-      String val, String uri, String radioValue, bool fetchMore) async {
+  Future<void> fetchRepoData(String uri) async {
     List<RepositoriesModel> currentList = [];
-
-    currentList.addAll(state.repoModel);
     late List<RepositoriesModel> list;
 
+    currentList.addAll(state.repoModel);
+
     try {
+      /// State wont go to loading when fetching more
+      /// except page index
       if (currentList.isEmpty ||
           state.pagePaginationValue == PagePagination.withIndex) {
-        /// State wont go to loading when fetching more
         emit(state.copyWith(state: CubitState.loading));
       }
 
-      debugPrint('$uri&page=${state.repoPage}');
       final response = await http.get(Uri.parse('$uri&page=${state.repoPage}'));
 
       if (response.statusCode == 200) {
@@ -169,6 +162,8 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
 
         currentList.addAll(list);
 
+        /// Stop getting more data when list length is
+        /// less than limit
         if (list.length < state.limit) {
           emit(state.copyWith(repoHasMore: false));
         }
@@ -177,7 +172,7 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
           state.copyWith(
             state: CubitState.loaded,
             repoModel: currentList,
-            reposSearch: val,
+            reposSearch: state.search,
           ),
         );
       } else {
@@ -185,88 +180,82 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
           error403();
         }
       }
-    } catch (e) {
-      emit(
-        state.copyWith(
-          state: CubitState.errorLoading,
-          errorMessage:
-              'Error: Please contact support about this error \n${e.toString()}',
-        ),
-      );
+    } catch (error) {
+      errorSupport(error.toString());
     }
   }
 
+  /// Cache but without memory yet
   Future<void> cacheOrFetch(
     String uri,
-    RadioValue radioValue,
   ) async {
     /// When radio button value is users
-    if (radioValue == RadioValue.users) {
+    if (state.radioValue == RadioValue.users) {
+      /// When User Model is empty or first search
       if (state.userModel.isEmpty) {
-        await fetchUsersData(
-            state.search ?? "", uri, radioValue.name, (state.userHasMore));
+        await fetchUsersData(uri);
       } else {
+        /// When user search is not same with current search fetch new data
         if (state.usersSearch != state.search) {
           emptyData();
-          await fetchUsersData(
-              state.search ?? "", uri, radioValue.name, (state.userHasMore));
-        } else if ((state.userHasMore)) {
+          await fetchUsersData(uri);
+        }
+
+        /// When users search has more data
+        else if ((state.userHasMore)) {
           emit(state.copyWith(userPage: state.userPage! + 1));
 
-          await fetchUsersData(
-              state.search ?? "", uri, radioValue.name, (state.userHasMore));
-        } else {
+          await fetchUsersData(uri);
+        }
+
+        /// When there is no need to fetch new data will show loaded state
+        else {
           emit(state.copyWith(state: CubitState.loaded));
         }
       }
     }
 
     /// When radio button value is issues
-    else if (radioValue == RadioValue.issues) {
+    else if (state.radioValue == RadioValue.issues) {
+      /// When Issue Model is empty or first search
       if (state.issueModel.isEmpty) {
-        debugPrint(state.issueModel.length.toString());
-        await fetchIssuesData(
-            state.search ?? "", uri, radioValue.name, (state.issuesHasMore));
+        await fetchIssuesData(uri);
       } else {
+        /// When issues search is not same with current search fetch new data
         if (state.issuesSearch != state.search) {
           emptyData();
-          await fetchIssuesData(
-              state.search ?? "", uri, radioValue.name, (state.issuesHasMore));
-        } else if ((state.issuesHasMore)) {
+          await fetchIssuesData(uri);
+        }
+
+        /// When issues search has more data
+        else if ((state.issuesHasMore)) {
           emit(state.copyWith(issuesPage: state.issuesPage! + 1));
-          await fetchIssuesData(
-              state.search ?? "", uri, radioValue.name, (state.issuesHasMore));
-        } else {
-          emit(
-            state.copyWith(
-              state: CubitState.loaded,
-            ),
-          );
+          await fetchIssuesData(uri);
+        }
+
+        /// When there is no need to fetch new data will show loaded state
+        else {
+          emit(state.copyWith(state: CubitState.loaded));
         }
       }
     }
 
     /// When radio button value is repositories
-    else if (radioValue == RadioValue.repositories) {
-      ///
+    else if (state.radioValue == RadioValue.repositories) {
       /// When Repositories Model is empty or first search
       if (state.repoModel.isEmpty) {
-        await fetchRepoData(
-            state.search ?? "", uri, radioValue.name, (state.repoHasMore));
+        await fetchRepoData(uri);
       } else {
-        ///
         /// When repositories search is not same with current search fetch new data
         if (state.reposSearch != state.search) {
           emptyData();
-          await fetchRepoData(
-              state.search ?? "", uri, radioValue.name, (state.repoHasMore));
+          await fetchRepoData(uri);
         }
 
-        /// When repositories search has more data in lazy loading
+        /// When repositories search has more data
         else if ((state.repoHasMore)) {
           emit(state.copyWith(repoPage: state.repoPage! + 1));
-          await fetchRepoData(
-              state.search ?? "", uri, radioValue.name, (state.repoHasMore));
+          await fetchRepoData(uri);
         }
 
         /// When there is no need to fetch new data will show loaded state
@@ -302,9 +291,18 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     );
   }
 
+  /// When error and needed to contact Support
+  void errorSupport(String error) {
+    emit(
+      state.copyWith(
+        state: CubitState.errorLoading,
+        errorMessage: 'Error: Please contact support about this error \n$error',
+      ),
+    );
+  }
+
   /// Clear data when user search new value
   void emptyData() {
-    ///
     /// When radio button value is users
     if (state.radioValue == RadioValue.users) {
       emit(
@@ -347,25 +345,13 @@ class GithubSearchCubit extends Cubit<GithubSearchState> {
     ///
     /// When radio button value is users
     if (state.radioValue == RadioValue.users) {
-      emit(
-        state.copyWith(
-          userSelectedPage: value,
-        ),
-      );
+      emit(state.copyWith(userSelectedPage: value));
     }
     if (state.radioValue == RadioValue.issues) {
-      emit(
-        state.copyWith(
-          issuesSelectedPage: value,
-        ),
-      );
+      emit(state.copyWith(issuesSelectedPage: value));
     }
     if (state.radioValue == RadioValue.repositories) {
-      emit(
-        state.copyWith(
-          repoSelectedPage: value,
-        ),
-      );
+      emit(state.copyWith(repoSelectedPage: value));
     }
   }
 }

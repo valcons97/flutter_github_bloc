@@ -1,3 +1,5 @@
+part of 'github_search_cubit.dart';
+
 enum CubitState {
   initial,
   loading,

@@ -2,7 +2,7 @@
     package="com.example.deall">
     <uses-permission android:name="android.permission.INTERNET"/>
    <application
-        android:label="deall"
+        android:label="Github API"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

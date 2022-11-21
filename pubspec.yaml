@@ -44,7 +44,6 @@ dependencies:
   http: ^0.13.5
   injectable: ^1.5.3
   intl: ^0.17.0
-  number_pagination: ^0.0.3+2
   number_paginator: ^0.2.2
 
 dev_dependencies:

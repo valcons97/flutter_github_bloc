@@ -1,5 +1,9 @@
 part of '../github_page.dart';
 
+/// Header for selecting which one to search
+/// - users
+/// - issues
+/// - repositories
 class RadioHeader extends StatelessWidget {
   const RadioHeader({
     super.key,

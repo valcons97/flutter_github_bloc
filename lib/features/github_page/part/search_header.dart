@@ -1,5 +1,6 @@
 part of '../github_page.dart';
 
+/// Header for search with textformfield widget
 class SearchHeader extends StatelessWidget {
   const SearchHeader({super.key, required this.blocContext});
 
