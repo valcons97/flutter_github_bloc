@@ -18,9 +18,9 @@ class SearchHeader extends StatelessWidget {
               delay: const Duration(milliseconds: 1500),
               builder: (context, debounce) {
                 return TextFormField(
+                  initialValue: state.search,
                   decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.only(top: 20),
-                    isDense: true,
+                    contentPadding: const EdgeInsets.all(10.0),
                     hintText: "Search",
                     prefixIcon: Icon(
                       Icons.search,
